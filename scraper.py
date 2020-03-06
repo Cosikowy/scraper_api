@@ -1,10 +1,14 @@
-import urllib.request
 from inscriptis import get_text
 from bs4 import BeautifulSoup
+from flask_restplus import Resource
+from flask import send_file
+from io import BytesIO
+import urllib.request
 import requests
 import shutil
 import os
-from flask_restplus import Resource
+import zipfile
+import time
 
 def download_image(image_link, image_name, path):
     response = requests.get(image_link, stream=True)
@@ -14,6 +18,24 @@ def download_image(image_link, image_name, path):
     response.raw.decode_content = True
     shutil.copyfileobj(response.raw, file)
     del response
+
+def make_archive_for_download(source, destination):
+    
+    # Function to create a tar archive with all page data
+    
+    if not os.path.exists('./temp'):
+        os.mkdir('./temp')
+    
+    name = source.split('/')[-1]
+
+    shutil.make_archive(name, 'zip', source, destination)
+    try:
+        shutil.move(f'{name}.zip', f'temp/{destination}')
+    except: 
+        os.remove(f'./temp/{destination}/{name}.zip')
+        shutil.move(f'{name}.zip', f'temp/{destination}')
+
+    return f'{name}.zip'
 
 
 def scrap_text(url, host, decoder='utf-8'):
@@ -40,17 +62,17 @@ def scrap_images(url, host):
     image_links = []
 
     for image in images:
-        image_link = image["src"]
-        image_link = image_link.split('//')
+        image_link = image["src"]               # W tym miejscu może powstać błąd w razie dziwnego edge case
+        image_link = image_link.split('//')     # 
 
         if image_link[-1][0] != '/':
             image_link = 'http://'+image_link[-1]
         else:
             image_link = 'http://'+host+image_link[-1]
 
-        image_links.append(image_link)
+        image_links.append(image_link) 
     
-    for num ,link in enumerate(set(image_links)):
+    for num, link in enumerate(set(image_links)):
         download_image(link, num, host)
 
 
@@ -73,9 +95,6 @@ def create_folder(url):
 
 
 class Scrapper(Resource):
-    def __init__(self, url):
-        self.url = url
-
     def post(self, mode, url):
 
         host = create_folder(url)
@@ -86,7 +105,7 @@ class Scrapper(Resource):
 
         elif mode == 'content':
             scrap_text(url, host)
-            return 'Content Fetched', 200
+            return 'Content fetched', 200
 
         elif mode == 'both':
             scrap_text(url, host)
@@ -97,5 +116,17 @@ class Scrapper(Resource):
             return 'Wrong mode', 404
 
 
-    def get(self, mode, host):
-        pass
+    def get(self, mode, url):
+
+        if mode == 'download':
+            to_download = make_archive_for_download(f'./downloaded/{url}', './')
+
+            memory_file = BytesIO()
+            with zipfile.ZipFile(memory_file, 'w') as zf:
+                data = zipfile.ZipInfo(f'./temp/{to_download}')
+                data.date_time = time.localtime(time.time())[:6]
+                data.compress_type = zipfile.ZIP_DEFLATED
+                zf.writestr(data, f'./temp/{to_download}')
+            memory_file.seek(0)
+
+            return send_file(memory_file, attachment_filename=to_download, as_attachment=True)

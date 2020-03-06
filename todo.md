@@ -1,0 +1,3 @@
+Do zrobienia:
+ - Testy
+ - Docker
