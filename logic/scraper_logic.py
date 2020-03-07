@@ -1,19 +1,21 @@
 from inscriptis import get_text
 from bs4 import BeautifulSoup
-from flask_restplus import Resource
-from flask import send_file
-from io import BytesIO
 import urllib.request
 import requests
 import shutil
 import os
-import zipfile
 import time
+
+def validate_url(url):
+    if 'http' not in url:
+        print('validated')
+        url = 'http://'+url
+    return url
 
 def download_image(image_link, image_name, path):
     response = requests.get(image_link, stream=True)
 
-    file = open(f"./downloaded/{path}/{image_name}.jpg", 'wb')
+    file = open(f"./downloaded/{path}/{image_name}.png", 'wb')
     
     response.raw.decode_content = True
     shutil.copyfileobj(response.raw, file)
@@ -41,7 +43,7 @@ def make_archive_for_download(source, destination):
 def scrap_text(url, host, decoder='utf-8'):
     
     # ściąga całą zawartość strony przygotowaną wg formatu Markdown
-
+    print(url)
     html = urllib.request.urlopen(url).read().decode(decoder)
 
     text = get_text(html)
@@ -53,7 +55,7 @@ def scrap_text(url, host, decoder='utf-8'):
 def scrap_images(url, host):
 
     # Wyszukuje wszystkie elementy <img>, czyli domyślny objekt obrazu w HTML
-
+    print(url)
     response = requests.get(url)
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -92,41 +94,3 @@ def create_folder(url):
     else:
         os.mkdir(f'./downloaded/{host}')
     return host
-
-
-class Scrapper(Resource):
-    def post(self, mode, url):
-
-        host = create_folder(url)
-        
-        if mode == 'images':
-            scrap_images(url, host)
-            return 'Images fetched', 200
-
-        elif mode == 'content':
-            scrap_text(url, host)
-            return 'Content fetched', 200
-
-        elif mode == 'both':
-            scrap_text(url, host)
-            scrap_images(url, host)
-            return 'Page content and images fetched', 200
-
-        else:
-            return 'Wrong mode', 404
-
-
-    def get(self, mode, url):
-
-        if mode == 'download':
-            to_download = make_archive_for_download(f'./downloaded/{url}', './')
-
-            memory_file = BytesIO()
-            with zipfile.ZipFile(memory_file, 'w') as zf:
-                data = zipfile.ZipInfo(f'./temp/{to_download}')
-                data.date_time = time.localtime(time.time())[:6]
-                data.compress_type = zipfile.ZIP_DEFLATED
-                zf.writestr(data, f'./temp/{to_download}')
-            memory_file.seek(0)
-
-            return send_file(memory_file, attachment_filename=to_download, as_attachment=True)
