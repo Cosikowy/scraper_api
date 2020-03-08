@@ -1,19 +1,15 @@
-from inscriptis import get_text
-from bs4 import BeautifulSoup
-import urllib.request
-import requests
 import shutil
 import os
 import time
+import urllib.request
+import requests
+from inscriptis import get_text
+from bs4 import BeautifulSoup
 
 def validate_url(url):
     if not url.startswith('http'):           # Validacja adresów, aby można było wpisywać
-        url = 'http://'+url        # pełne adresy oraz pomijając http(s)
-    
-        # Dosyć toporna metoda walidacji
-        # sądze, że dałoby radę zrobić to lepiej
-        # ponieważ to rozwiązanie jest bardzo prowizoryczne
-    
+        url = 'http://'+url                  # pełne adresy oraz pomijając http(s)
+
     return url
 
 def download_image(image_link, image_name,path):
@@ -46,14 +42,15 @@ def make_archive_for_download(source, destination):
     return f'{name}.zip'
 
 
-def scrap_text(url, host, decoder='utf-8'):
+def scrap_text(url, host, encoding_type='utf-8'):
 
     # ściąga całą zawartość strony przygotowaną wg formatu Markdown
-    html = urllib.request.urlopen(url).read().decode(decoder)
+
+    html = urllib.request.urlopen(url).read().decode(encoding_type)
 
     text = get_text(html)
 
-    with open(f'./downloaded/{host}/page_content.txt', 'w', encoding=decoder) as _file:
+    with open(f'./downloaded/{host}/page_content.txt', 'w', encoding=encoding_type) as _file:
         _file.write(text)
 
 
@@ -87,18 +84,16 @@ def scrap_images(url, host):
 
 
 
-def create_folder(url):
+def create_folder_on_url(url):
     if not os.path.exists('./downloaded'):
         os.mkdir('./downloaded/')
 
-    if 'http://' or 'https://' in url:
-        _url = url.split('//')[-1]
-        host = _url.split('/')[0]
-    else:
-        host = _url.split('/')[0]
+    _url = url.split('//')[-1]
+    folder_name = _url.split('/')[0]
 
-    if os.path.exists(f'./downloaded/{host}'):
+    if os.path.exists(f'./downloaded/{folder_name}'):
         pass
     else:
-        os.mkdir(f'./downloaded/{host}')
-    return host
+        os.mkdir(f'./downloaded/{folder_name}')
+    
+    return folder_name

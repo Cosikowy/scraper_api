@@ -1,6 +1,6 @@
 import unittest
 from routes.app import app
-from logic.scraper_logic import validate_url, create_folder
+from logic.scraper import validate_url, create_folder_on_url
 import os
 import shutil
 
@@ -27,7 +27,7 @@ class StartingTestCase(unittest.TestCase):
 
         # Testy tworzenia folderów
 
-        self.assertTrue(create_folder('test'), os.path.exists('./downloaded/test'))
+        self.assertTrue(create_folder_on_url('test'), os.path.exists('./downloaded/test'))
 
     def test_validate_url(self):
 
@@ -57,14 +57,14 @@ class StartingTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists('./downloaded/pl.wikipedia.org/page_content.txt'))
 
     def test_wrong_requests(self):
-        response_1 = self.app.get('http://localhost:5000/scraper/scraper/downloade/-')
-        self.assertEqual(401, response_1.status_code)
+        bad_list_request = self.app.get('http://localhost:5000/scraper/scraper/downloade/-')
+        self.assertEqual(400, bad_list_request.status_code)
 
-        response_2 = self.app.get('http://localhost:5000/scraper/scraper/download/test1')
-        self.assertEqual(402, response_2.status_code)
+        wrong_folder_request = self.app.get('http://localhost:5000/scraper/scraper/download/test1')
+        self.assertEqual(406, wrong_folder_request.status_code)
 
-        response_3 = self.app.post('http://localhost:5000/scraper/scraper/both/example')
-        self.assertEqual(403, response_3.status_code)
+        bad_web_page = self.app.post('http://localhost:5000/scraper/scraper/both/example')
+        self.assertEqual(400, bad_web_page.status_code)
 
 
 

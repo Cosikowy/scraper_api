@@ -1,8 +1,8 @@
+import os
 from flask import Flask
 from flask_restplus import Api, Resource, Namespace
 from resources.scraper import Scrapper
 from flask_cors import CORS
-import os
 
 
 app = Flask(__name__)
