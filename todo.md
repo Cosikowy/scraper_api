@@ -1,3 +1,1 @@
-Do zrobienia:
- - Testy
- - Docker
+- Readme do zrobienia
