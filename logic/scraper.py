@@ -70,17 +70,17 @@ def scrap_images(url, host):
             image_link = image_link.split('//')
 
             if image_link[-1][0] != '/':
-                image_link = 'http://'+image_link[-1]
+                image_link = f'http://{image_link[-1]}'
             else:
-                image_link = 'http://'+host+image_link[-1]
+                image_link = f'http://{host+image_link[-1]}'
 
             image_links.append(image_link) 
         except KeyError:
             continue
 
 
-    for _, link in enumerate(set(image_links)):
-        download_image(link, _,host)
+    for name, link in enumerate(set(image_links)):
+        download_image(link, name,host)
 
 
 
@@ -91,9 +91,7 @@ def create_folder_on_url(url):
     _url = url.split('//')[-1]
     folder_name = _url.split('/')[0]
 
-    if os.path.exists(f'./downloaded/{folder_name}'):
-        pass
-    else:
+    if not os.path.exists(f'./downloaded/{folder_name}'):
         os.mkdir(f'./downloaded/{folder_name}')
     
     return folder_name
