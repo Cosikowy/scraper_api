@@ -36,9 +36,7 @@ class Scrapper(Resource):
 
         downloaded_list = os.listdir('./downloaded')
         if mode == 'download':
-
             if url in downloaded_list:
-
                 to_download = make_archive_for_download(f'./downloaded/{url}', './')
                 memory_file = BytesIO()
                 with zipfile.ZipFile(memory_file, 'w') as zf:
@@ -47,8 +45,8 @@ class Scrapper(Resource):
                     data.compress_type = zipfile.ZIP_DEFLATED
                     zf.writestr(data, f'./temp/{to_download}')
                 memory_file.seek(0)
-
                 return send_file(memory_file, attachment_filename=to_download, as_attachment=True)
+            
             else:
                 return f'Host not in folder, available: {downloaded_list}', 406
 

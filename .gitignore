@@ -2,5 +2,5 @@ downloaded/**
 temp/**
 *.pyc
 __pycache__
-./__pycache__
-./.vscode
+**/__pycache__
+.vscode
