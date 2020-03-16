@@ -2,6 +2,7 @@ import os
 import time
 from io import BytesIO
 import zipfile
+import asyncio
 from flask import send_file
 from flask_restplus import Resource
 from logic.scraper import create_folder_on_url, scrap_images, scrap_text, make_archive_for_download, validate_url
@@ -12,27 +13,29 @@ class Scrapper(Resource):
         url = validate_url(url)
         host = create_folder_on_url(url)
 
-        try:
-            if mode == 'images':
-                scrap_images(url, host)
-                return 'Images fetched', 200
+        # try:
+        if mode == 'images':
+            asyncio.run(scrap_images(url, host))
+            return 'Images fetched', 200
 
-            elif mode == 'content':
-                scrap_text(url, host)
-                return 'Content fetched', 200
+        elif mode == 'content':
+            asyncio.run(scrap_text(url, host))
+            return 'Content fetched', 200
 
-            elif mode == 'both':
-                scrap_text(url, host)
-                scrap_images(url, host)
-                return 'Page content and images fetched', 200
+        elif mode == 'both':
+            asyncio.run(scrap_text(url, host))
+            asyncio.run(scrap_images(url, host))
+            return 'Page content and images fetched', 200
 
-            else:
-                return 'Bad request', 400
+        else:
+            return 'Bad request', 400
         
-        except Exception as e:
-            return f'Bad request, error occured: {e}', 400
+        # except Exception as e:
+        #     return f'Bad request, error occured: {e}', 400
 
     def get(self, mode, url):
+        if not os.path.exists('./downloaded'):
+            os.mkdir('./downloaded/')
 
         downloaded_list = os.listdir('./downloaded')
         if mode == 'download':
